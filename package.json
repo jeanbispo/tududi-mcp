@@ -18,7 +18,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "type-check": "bunx tsc --noEmit -p tsconfig.mcp.json"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.25.2",
