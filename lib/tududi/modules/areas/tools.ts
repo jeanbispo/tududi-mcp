@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Area } from '@/lib/tududi/types';
 import {
   CreateAreaSchema,
@@ -8,10 +8,7 @@ import {
   UpdateAreaSchema,
 } from './schemas';
 
-export function registerAreaTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerAreaTools(server: McpServer): void {
   server.registerTool(
     'list_areas',
     {
@@ -25,7 +22,8 @@ export function registerAreaTools(
         openWorldHint: false,
       },
     },
-    async () => {
+    async (_args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const areas = await client.get<Area[]>('/api/areas');
       const summary = areas
         .map((area) => `- 📂 ${area.name} (uid: ${area.uid})`)
@@ -55,7 +53,8 @@ export function registerAreaTools(
         openWorldHint: false,
       },
     },
-    async (args) => {
+    async (args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const area = await client.post<Area>('/api/areas', args);
 
       return {
@@ -83,7 +82,8 @@ export function registerAreaTools(
         openWorldHint: false,
       },
     },
-    async ({ uid, ...updates }) => {
+    async ({ uid, ...updates }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const area = await client.patch<Area>(`/api/areas/${uid}`, updates);
 
       return {
@@ -111,7 +111,8 @@ export function registerAreaTools(
         openWorldHint: false,
       },
     },
-    async ({ uid }) => {
+    async ({ uid }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       await client.delete<void>(`/api/areas/${uid}`);
 
       return {

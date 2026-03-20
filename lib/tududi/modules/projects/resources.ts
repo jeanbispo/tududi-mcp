@@ -2,7 +2,7 @@ import {
   ResourceTemplate,
   type McpServer,
 } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Project } from '@/lib/tududi/types';
 
 interface ProjectsListResponse {
@@ -19,10 +19,7 @@ function normalizeProjects(
   return Object.values(projects).flat();
 }
 
-export function registerProjectResources(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerProjectResources(server: McpServer): void {
   server.registerResource(
     'projects_list',
     'tududi://projects',
@@ -31,7 +28,8 @@ export function registerProjectResources(
       description: 'List of all projects from Tududi',
       mimeType: 'application/json',
     },
-    async (uri) => {
+    async (uri, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const data = await client.get<ProjectsListResponse>('/api/projects');
 
       return {
@@ -47,7 +45,8 @@ export function registerProjectResources(
   );
 
   const projectTemplate = new ResourceTemplate('tududi://projects/{uid}', {
-    list: async () => {
+    list: async (extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const data = await client.get<ProjectsListResponse>('/api/projects');
       const projects = normalizeProjects(data.projects);
 
@@ -68,7 +67,8 @@ export function registerProjectResources(
       description: 'Detailed information about a specific project',
       mimeType: 'application/json',
     },
-    async (uri, params) => {
+    async (uri, params, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const uid = params.uid as string;
       const project = await client.get<Project>(`/api/project/${uid}`);
 

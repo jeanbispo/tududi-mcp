@@ -1,7 +1,6 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { createMcpHandler, withMcpAuth } from 'mcp-handler';
 
-import { TududiClient } from '@/lib/tududi/client';
 import { registerAllModules } from '@/lib/tududi/modules';
 
 export const dynamic = 'force-dynamic';
@@ -9,8 +8,7 @@ export const dynamic = 'force-dynamic';
 const handler = createMcpHandler(
   async (server) => {
     console.log('[tududi-mcp] Initializing server and registering modules...');
-    const client = new TududiClient();
-    const registered = await registerAllModules(server, client);
+    const registered = await registerAllModules(server);
     console.log(`[tududi-mcp] Registered modules: ${registered.join(', ')}`);
   },
   {

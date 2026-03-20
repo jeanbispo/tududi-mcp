@@ -1,11 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { TasksMetrics } from '@/lib/tududi/types';
 
-export function registerMetricsResources(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerMetricsResources(server: McpServer): void {
   server.registerResource(
     'metrics_dashboard',
     'tududi://metrics',
@@ -14,7 +11,8 @@ export function registerMetricsResources(
       description: 'Dashboard metrics and task lists from Tududi',
       mimeType: 'application/json',
     },
-    async (uri) => {
+    async (uri, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const metrics = await client.get<TasksMetrics>('/api/tasks/metrics');
 
       return {

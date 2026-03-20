@@ -1,3 +1,5 @@
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+
 export class TududiApiError extends Error {
   constructor(
     public status: number,
@@ -21,9 +23,6 @@ export type TududiQueryParams = Record<string, TududiQueryValue>;
 
 type TududiHttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
-const API_URL_ENV = 'Tududi-Api-Url';
-const API_TOKEN_ENV = 'Bearer Api Token';
-
 interface TududiRequestOptions {
   params?: TududiQueryParams;
   body?: unknown;
@@ -31,33 +30,23 @@ interface TududiRequestOptions {
 
 export class TududiClient {
   constructor(
-    private readonly configuredBaseUrl?: string,
-    private readonly configuredApiToken?: string,
-  ) {}
-
-  private get baseUrl(): string {
-    const baseUrl = (this.configuredBaseUrl || '').trim();
-
+    private readonly baseUrl: string,
+    private readonly apiToken: string,
+  ) {
     if (!baseUrl) {
-      throw new Error(`${API_URL_ENV} is required.`);
+      throw new Error('baseUrl is required.');
+    }
+
+    if (!apiToken) {
+      throw new Error('apiToken is required.');
     }
 
     try {
-      const normalizedBaseUrl = new URL(baseUrl).toString();
-      return normalizedBaseUrl.replace(/\/$/, '');
+      const normalized = new URL(baseUrl).toString();
+      this.baseUrl = normalized.replace(/\/$/, '');
     } catch {
-      throw new Error(`${API_URL_ENV} must be a valid absolute URL.`);
+      throw new Error('baseUrl must be a valid absolute URL.');
     }
-  }
-
-  private get apiToken(): string {
-    const apiToken = (this.configuredApiToken || '').trim();
-
-    if (!apiToken) {
-      throw new Error(`${API_TOKEN_ENV} is required.`);
-    }
-
-    return apiToken;
   }
 
   private get authorizationHeader(): string {
@@ -161,4 +150,29 @@ export class TududiClient {
 
     return text;
   }
+}
+
+/**
+ * Creates a TududiClient from the authInfo provided by the MCP SDK
+ * in each tool/resource callback's `extra` parameter.
+ *
+ * This ensures each request uses the per-session credentials instead
+ * of relying on shared process.env variables.
+ */
+export function createClientFromAuthInfo(authInfo?: AuthInfo): TududiClient {
+  if (!authInfo) {
+    throw new Error('authInfo is required — request is not authenticated.');
+  }
+
+  const apiUrl = (authInfo.extra as Record<string, unknown> | undefined)
+    ?.apiUrl as string | undefined;
+  const token = authInfo.token;
+
+  if (!apiUrl || !token) {
+    throw new Error(
+      'authInfo must contain extra.apiUrl and token for Tududi API access.',
+    );
+  }
+
+  return new TududiClient(apiUrl, token);
 }

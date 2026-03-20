@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Project } from '@/lib/tududi/types';
 import {
   CreateProjectSchema,
@@ -26,10 +26,7 @@ function formatProjectTaskStatus(project: Project): string {
   return `total ${project.task_status.total}, done ${project.task_status.done}, in progress ${project.task_status.in_progress}, not started ${project.task_status.not_started}`;
 }
 
-export function registerProjectTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerProjectTools(server: McpServer): void {
   server.registerTool(
     'list_projects',
     {
@@ -44,7 +41,8 @@ export function registerProjectTools(
         openWorldHint: false,
       },
     },
-    async ({ status, area_id }) => {
+    async ({ status, area_id }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const params: Record<string, string> = {};
 
       if (status) {
@@ -93,7 +91,8 @@ export function registerProjectTools(
         openWorldHint: false,
       },
     },
-    async (args) => {
+    async (args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const project = await client.post<Project>('/api/project', args);
 
       return {
@@ -121,7 +120,8 @@ export function registerProjectTools(
         openWorldHint: false,
       },
     },
-    async ({ uid, ...updates }) => {
+    async ({ uid, ...updates }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const project = await client.patch<Project>(
         `/api/project/${uid}`,
         updates,
@@ -152,7 +152,8 @@ export function registerProjectTools(
         openWorldHint: false,
       },
     },
-    async ({ uid }) => {
+    async ({ uid }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       await client.delete<{ message: 'Project successfully deleted' }>(
         `/api/project/${uid}`,
       );

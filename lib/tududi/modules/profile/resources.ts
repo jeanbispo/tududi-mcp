@@ -1,11 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Profile } from '@/lib/tududi/types';
 
-export function registerProfileResources(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerProfileResources(server: McpServer): void {
   server.registerResource(
     'profile_detail',
     'tududi://profile',
@@ -14,7 +11,8 @@ export function registerProfileResources(
       description: 'Current Tududi profile details',
       mimeType: 'application/json',
     },
-    async (uri) => {
+    async (uri, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const profile = await client.get<Profile>('/api/profile');
 
       return {

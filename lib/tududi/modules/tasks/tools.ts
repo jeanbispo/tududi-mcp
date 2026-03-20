@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Task, TasksListResponse } from '@/lib/tududi/types';
 import {
   CreateTaskSchema,
@@ -11,10 +11,7 @@ import {
   UpdateTaskSchema,
 } from './schemas';
 
-export function registerTaskTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerTaskTools(server: McpServer): void {
   server.registerTool(
     'list_tasks',
     {
@@ -29,7 +26,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async ({ type, status, project_id, group_by, order_by }) => {
+    async ({ type, status, project_id, group_by, order_by }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const params: Record<string, string> = {};
 
       if (type) {
@@ -86,7 +84,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async ({ uid }) => {
+    async ({ uid }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const task = await client.get<Task>(`/api/task/${uid}`);
 
       const subtasksList = task.subtasks?.length
@@ -126,7 +125,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async (args) => {
+    async (args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const task = await client.post<Task>('/api/task', args);
 
       return {
@@ -154,7 +154,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async ({ uid, ...updates }) => {
+    async ({ uid, ...updates }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const task = await client.patch<Task>(`/api/task/${uid}`, updates);
 
       return {
@@ -182,7 +183,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async ({ uid }) => {
+    async ({ uid }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       await client.delete<{ message: 'Task successfully deleted' }>(
         `/api/task/${uid}`,
       );
@@ -212,7 +214,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async ({ id }) => {
+    async ({ id }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const task = await client.patch<Task>(
         `/api/task/${id}/toggle_completion`,
         {},
@@ -242,7 +245,8 @@ export function registerTaskTools(
         openWorldHint: false,
       },
     },
-    async ({ uid }) => {
+    async ({ uid }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const subtasks = await client.get<Task[]>(`/api/task/${uid}/subtasks`);
 
       const summary = subtasks

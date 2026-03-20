@@ -1,9 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
 import type { ModuleName, TududiConfig } from '@/lib/tududi/config';
 import { isModuleEnabled } from '@/lib/tududi/config';
 
-export type ModuleRegistrar = (server: McpServer, client: TududiClient) => void;
+export type ModuleRegistrar = (server: McpServer) => void;
 
 const moduleRegistry = new Map<
   ModuleName,
@@ -21,7 +20,6 @@ moduleRegistry.set('metrics', () => import('./metrics'));
 
 async function registerModules(
   server: McpServer,
-  client: TududiClient,
   shouldRegister: (moduleName: ModuleName) => boolean,
 ): Promise<ModuleName[]> {
   const registered: ModuleName[] = [];
@@ -32,7 +30,7 @@ async function registerModules(
     }
 
     const moduleDefinition = await loader();
-    moduleDefinition.register(server, client);
+    moduleDefinition.register(server);
     registered.push(name);
   }
 
@@ -41,15 +39,13 @@ async function registerModules(
 
 export async function registerAllModules(
   server: McpServer,
-  client: TududiClient,
 ): Promise<ModuleName[]> {
-  return registerModules(server, client, () => true);
+  return registerModules(server, () => true);
 }
 
 export async function registerEnabledModules(
   server: McpServer,
-  client: TududiClient,
   config: TududiConfig,
 ): Promise<ModuleName[]> {
-  return registerModules(server, client, (name) => isModuleEnabled(config, name));
+  return registerModules(server, (name) => isModuleEnabled(config, name));
 }

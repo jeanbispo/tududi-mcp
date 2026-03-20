@@ -1,11 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Tag } from '@/lib/tududi/types';
 
-export function registerTagResources(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerTagResources(server: McpServer): void {
   server.registerResource(
     'tags_list',
     'tududi://tags',
@@ -14,7 +11,8 @@ export function registerTagResources(
       description: 'List of all tags from Tududi',
       mimeType: 'application/json',
     },
-    async (uri) => {
+    async (uri, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const tags = await client.get<Tag[]>('/api/tags');
 
       return {

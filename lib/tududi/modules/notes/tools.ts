@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Note } from '@/lib/tududi/types';
 import {
   CreateNoteSchema,
@@ -12,10 +12,7 @@ function formatNoteTitle(note: Note): string {
   return note.title || 'Untitled note';
 }
 
-export function registerNoteTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerNoteTools(server: McpServer): void {
   server.registerTool(
     'list_notes',
     {
@@ -30,7 +27,8 @@ export function registerNoteTools(
         openWorldHint: false,
       },
     },
-    async ({ order_by, project_id }) => {
+    async ({ order_by, project_id }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const params: Record<string, string> = {};
 
       if (order_by) {
@@ -74,7 +72,8 @@ export function registerNoteTools(
         openWorldHint: false,
       },
     },
-    async (args) => {
+    async (args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const note = await client.post<Note>('/api/note', args);
 
       return {
@@ -102,7 +101,8 @@ export function registerNoteTools(
         openWorldHint: false,
       },
     },
-    async ({ uid, ...updates }) => {
+    async ({ uid, ...updates }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const note = await client.patch<Note>(`/api/note/${uid}`, updates);
 
       return {
@@ -130,7 +130,8 @@ export function registerNoteTools(
         openWorldHint: false,
       },
     },
-    async ({ uid }) => {
+    async ({ uid }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       await client.delete<{ message: string }>(`/api/note/${uid}`);
 
       return {

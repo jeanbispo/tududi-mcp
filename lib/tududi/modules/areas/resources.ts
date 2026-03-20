@@ -1,11 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Area } from '@/lib/tududi/types';
 
-export function registerAreaResources(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerAreaResources(server: McpServer): void {
   server.registerResource(
     'areas_list',
     'tududi://areas',
@@ -14,7 +11,8 @@ export function registerAreaResources(
       description: 'List of all areas from Tududi',
       mimeType: 'application/json',
     },
-    async (uri) => {
+    async (uri, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const areas = await client.get<Area[]>('/api/areas');
 
       return {

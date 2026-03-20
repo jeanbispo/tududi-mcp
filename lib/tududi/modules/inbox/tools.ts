@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { InboxItem, InboxPaginatedResponse } from '@/lib/tududi/types';
 import { CreateInboxItemSchema, ListInboxSchema } from './schemas';
 
@@ -16,10 +16,7 @@ function normalizeInboxResponse(data: InboxResponse): {
   return data;
 }
 
-export function registerInboxTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerInboxTools(server: McpServer): void {
   server.registerTool(
     'list_inbox',
     {
@@ -34,7 +31,8 @@ export function registerInboxTools(
         openWorldHint: false,
       },
     },
-    async ({ limit, offset }) => {
+    async ({ limit, offset }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const params: Record<string, string> = {};
 
       if (limit) {
@@ -78,7 +76,8 @@ export function registerInboxTools(
         openWorldHint: false,
       },
     },
-    async ({ content, source }) => {
+    async ({ content, source }, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const item = await client.post<InboxItem>('/api/inbox', {
         content,
         source: source || 'mcp',

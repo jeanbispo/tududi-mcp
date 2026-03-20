@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { InboxItem, InboxPaginatedResponse } from '@/lib/tududi/types';
 
 type InboxResponse = InboxItem[] | InboxPaginatedResponse;
@@ -15,10 +15,7 @@ function normalizeInboxResponse(data: InboxResponse): {
   return data;
 }
 
-export function registerInboxResources(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerInboxResources(server: McpServer): void {
   server.registerResource(
     'inbox_list',
     'tududi://inbox',
@@ -27,7 +24,8 @@ export function registerInboxResources(
       description: 'Inbox capture items from Tududi',
       mimeType: 'application/json',
     },
-    async (uri) => {
+    async (uri, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const data = await client.get<InboxResponse>('/api/inbox');
       const inbox = normalizeInboxResponse(data);
 

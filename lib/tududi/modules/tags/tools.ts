@@ -1,12 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Tag } from '@/lib/tududi/types';
 import { CreateTagSchema, ListTagsSchema } from './schemas';
 
-export function registerTagTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerTagTools(server: McpServer): void {
   server.registerTool(
     'list_tags',
     {
@@ -20,7 +17,8 @@ export function registerTagTools(
         openWorldHint: false,
       },
     },
-    async () => {
+    async (_args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const tags = await client.get<Tag[]>('/api/tags');
       const summary = tags
         .map((tag) => `- 🏷️ ${tag.name} (uid: ${tag.uid})`)
@@ -50,7 +48,8 @@ export function registerTagTools(
         openWorldHint: false,
       },
     },
-    async (args) => {
+    async (args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const tag = await client.post<Tag>('/api/tag', args);
 
       return {

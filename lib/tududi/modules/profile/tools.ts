@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { TududiClient } from '@/lib/tududi/client';
+import { createClientFromAuthInfo } from '@/lib/tududi/client';
 import type { Profile } from '@/lib/tududi/types';
 import { GetProfileSchema, UpdateProfileSchema } from './schemas';
 
@@ -36,10 +36,7 @@ function formatProfileSummary(profile: Profile): string {
   ].join('\n');
 }
 
-export function registerProfileTools(
-  server: McpServer,
-  client: TududiClient,
-): void {
+export function registerProfileTools(server: McpServer): void {
   server.registerTool(
     'get_profile',
     {
@@ -53,7 +50,8 @@ export function registerProfileTools(
         openWorldHint: false,
       },
     },
-    async () => {
+    async (_args, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const profile = await client.get<Profile>('/api/profile');
 
       return {
@@ -81,7 +79,8 @@ export function registerProfileTools(
         openWorldHint: false,
       },
     },
-    async (updates) => {
+    async (updates, extra) => {
+      const client = createClientFromAuthInfo(extra.authInfo);
       const profile = await client.patch<Profile>('/api/profile', updates);
 
       return {
